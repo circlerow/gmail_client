@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Gmail API Quickstart</title>
+    <meta charset="utf-8" />
+</head>
+
+<body>
+    <p>Gmail API Quickstart</p>
+
+    <!--Add buttons to initiate auth sequence and sign out-->
+    <button id="authorize_button" onclick="handleAuthClick()">Đăng nhập</button>
+    <button id="signout_button" onclick="handleSignoutClick()">Đăng xuất</button>
+    <button id="list_email">Danh sách email</button>
+    <button id="send_button">Gửi Email</button>
+    <input type="file" id="file-input">
+    <button id="send_button_attach">Gửi Email với file đính kèm</button>
+
+
+    <pre id="content" style="white-space: pre-wrap;"></pre>
+
+    <script type="text/javascript">
+
+        const CLIENT_ID = '600421017738-adlfl0kf2dcel6h4ot0uncfal31kuc54.apps.googleusercontent.com';
+        const API_KEY = 'AIzaSyBWyDXn05ZoDqy698_vxCVcHjEeWsiZZec';
+
+        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest';
+
+        // Authorization scopes required by the API; multiple scopes can be
+        // included, separated by spaces.
+        const SCOPES = 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.compose';
+
+        let tokenClient;
+        let gapiInited = false;
+        let gisInited = false;
+
+        document.getElementById('authorize_button').style.visibility = 'hidden';
+        document.getElementById('signout_button').style.visibility = 'hidden';
+        document.getElementById('list_email').style.visibility = 'hidden';
+        document.getElementById('send_button').style.visibility = 'hidden';
+        document.getElementById('send_button_attach').style.visibility = 'hidden';
+        document.getElementById('file-input').style.visibility = 'hidden';
+
+
+
+        function gapiLoaded() {
+            gapi.load('client', initializeGapiClient);
+        }
+
+        async function initializeGapiClient() {
+            await gapi.client.init({
+                apiKey: API_KEY,
+                discoveryDocs: [DISCOVERY_DOC],
+            });
+            gapiInited = true;
+            maybeEnableButtons();
+        }
+
+
+        function gisLoaded() {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: '', // defined later
+            });
+            gisInited = true;
+            maybeEnableButtons();
+        }
+
+
+        function maybeEnableButtons() {
+            if (gapiInited && gisInited) {
+                document.getElementById('authorize_button').style.visibility = 'visible';
+            }
+        }
+
+        /**
+        *  Sign in the user upon button click.
+        */
+        function handleAuthClick() {
+            tokenClient.callback = async (resp) => {
+                if (resp.error !== undefined) {
+                    throw (resp);
+                }
+                document.getElementById('signout_button').style.visibility = 'visible';
+                document.getElementById('send_button').style.visibility = 'visible';
+                document.getElementById('file-input').style.visibility = 'visible';
+                document.getElementById('send_button_attach').style.visibility = 'visible';
+                document.getElementById('authorize_button').innerText = 'Refresh';
+                await listEmails();
+            };
+
+            if (gapi.client.getToken() === null) {
+                // Prompt the user to select a Google Account and ask for consent to share their data
+                // when establishing a new session.
+                tokenClient.requestAccessToken({ prompt: 'consent' });
+            } else {
+                // Skip display of account chooser and consent dialog for an existing session.
+                tokenClient.requestAccessToken({ prompt: '' });
+            }
+        }
+
+        /**
+        *  Sign out the user upon button click.
+        */
+        function handleSignoutClick() {
+            const token = gapi.client.getToken();
+            if (token !== null) {
+                google.accounts.oauth2.revoke(token.access_token);
+                gapi.client.setToken('');
+                document.getElementById('content').innerText = '';
+                document.getElementById('authorize_button').innerText = 'Authorize';
+                document.getElementById('signout_button').style.visibility = 'hidden';
+            }
+        }
+
+        /**
+        * Print all Labels in the authorized user's inbox. If no labels
+        * are found an appropriate message is printed.
+        */
+        async function listLabels() {
+            let response;
+            try {
+                response = await gapi.client.gmail.users.labels.list({
+                    'userId': 'me',
+                });
+            } catch (err) {
+                document.getElementById('content').innerText = err.message;
+                return;
+            }
+            const labels = response.result.labels;
+            if (!labels || labels.length == 0) {
+                document.getElementById('content').innerText = 'No labels found.';
+                return;
+            }
+            // Flatten to string to display
+            const output = labels.reduce(
+                (str, label) => `${str}${label.name}\n`,
+                'Labels:\n');
+            document.getElementById('content').innerText = output;
+        }
+
+        /**
+* Lấy và hiển thị danh sách email trong hộp thư đến của người dùng.
+*/
+        /**
+* Lấy và hiển thị danh sách email trong hộp thư đến của người dùng.
+*/
+        async function listEmails() {
+            let response;
+            try {
+                response = await gapi.client.gmail.users.messages.list({
+                    'userId': 'me',
+                });
+            } catch (err) {
+                document.getElementById('content').innerText = err.message;
+                return;
+            }
+            const emails = response.result.messages;
+            if (!emails || emails.length == 0) {
+                document.getElementById('content').innerText = 'Không tìm thấy email nào.';
+                return;
+            }
+
+            // Lấy thông tin chi tiết cho từng email
+            const emailPromises = emails.map(async (email) => {
+                try {
+                    const emailResponse = await gapi.client.gmail.users.messages.get({
+                        'userId': 'me',
+                        'id': email.id,
+                        'format': 'metadata', // Định dạng metadata để chỉ lấy tiêu đề và người gửi
+                    });
+                    const emailData = emailResponse.result;
+                    const subject = emailData.payload.headers.find(header => header.name === 'Subject');
+                    const sender = emailData.payload.headers.find(header => header.name === 'From');
+                    const date = emailData.payload.headers.find(header => header.name === 'Date');
+
+                    // Hiển thị thông tin tiêu đề và người gửi của email
+                    const emailInfo = `Tiêu đề: ${subject.value}\nNgười gửi: ${sender.value}\nNgày gửi:${date.value}\n`;
+                    document.getElementById('content').innerText += emailInfo;
+                } catch (err) {
+                    console.error(`Lỗi khi lấy thông tin email ${email.id}: ${err.message}`);
+                }
+            });
+
+            await Promise.all(emailPromises);
+        }
+
+        /**
+* Gửi một email.
+* @param {string} to Địa chỉ email của người nhận.
+* @param {string} subject Tiêu đề của email.
+* @param {string} body Nội dung của email.
+*/
+        async function sendEmail(to, subject, body) {
+            const emailHeaders = [
+                `To: ${to}`,
+                'Content-Type: text/plain; charset="UTF-8"',
+                'MIME-Version: 1.0',
+                `Subject: ${subject}`,
+                '',
+                body
+            ];
+            const email = emailHeaders.join('\r\n').trim();
+
+            try {
+                const response = await gapi.client.gmail.users.messages.send({
+                    'userId': 'me',
+                    'resource': {
+                        'raw': window.btoa(unescape(encodeURIComponent(email)))
+                    }
+                });
+                console.log('Email sent:', response);
+            } catch (err) {
+                console.error('Lỗi khi gửi email:', err);
+            }
+        }
+        async function sendEmailWithAttachment(to, subject, body, attachment) {
+            const reader = new FileReader();
+
+            reader.onload = async function (event) {
+                const attachmentData = event.target.result.split(',')[1]; // Lấy dữ liệu từ base64
+
+                const emailHeaders = [
+                    `To: ${to}`,
+                    'Content-Type: multipart/mixed; boundary="boundary"',
+                    'MIME-Version: 1.0',
+                    `Subject: ${subject}`,
+                    '',
+                    '--boundary',
+                    'Content-Type: text/plain; charset="UTF-8"',
+                    '',
+                    body,
+                    '',
+                    '--boundary',
+                    `Content-Type: ${attachment.type}`,
+                    'Content-Transfer-Encoding: base64',
+                    '',
+                    attachmentData,
+                    '--boundary--',
+                ];
+
+                const email = emailHeaders.join('\r\n').trim();
+
+                try {
+                    const response = await gapi.client.gmail.users.messages.send({
+                        'userId': 'me',
+                        'resource': {
+                            'raw': window.btoa(unescape(encodeURIComponent(email)))
+                        }
+                    });
+                    console.log('Email sent:', response);
+                } catch (err) {
+                    console.error('Lỗi khi gửi email:', err);
+                }
+            };
+
+            reader.readAsDataURL(attachment);
+        }
+        document.getElementById('list_email').addEventListener('click', listLabels);
+
+        document.getElementById('send_button').addEventListener('click', function () {
+            const to = 'tu29102002@gmail.com'; // Địa chỉ email người nhận
+            const subject = 'Tiêu đề email'; // Tiêu đề email
+            const body = 'Nội dung email'; // Nội dung email
+
+            sendEmail(to, subject, body);
+        });
+
+
+        document.getElementById('send_button_attach').addEventListener('click', function () {
+            const to = 'tu29102002@gmail.com';
+            const subject = 'Tiêu đề email'; // Tiêu đề email
+            const body = 'Nội dung email'; // Nội dung email
+            const attachment = document.getElementById('file-input').files[0]; // Tệp đính kèm
+            sendEmailWithAttachment(to, subject, body, attachment);
+        });
+
+
+    </script>
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+</body>
+
+</html>
