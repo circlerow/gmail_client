@@ -50,9 +50,12 @@
             </ul>
         </div>
         <div class="row col-8">
-            <input type="text" placeholder="Email nhận" id="send_email_1" class="col-8 mb-1 form-control rounded">
-            <input type="text" placeholder="Tiêu đề" id="send_email_2" class="col-8 form-control mb-1 rounded">
-            <textarea placeholder="Nội dung" id="send_email_3" class="col-12 form-control mb-1 rounded"></textarea>
+            <input type="text" placeholder="Email nhận(Yêu cầu nhập chính xác địa chỉ Email nhá :)" id="send_email_1"
+                class="col-8 mb-1 form-control rounded">
+            <input type="text" placeholder="Tiêu đề(Cái này đừng viết có dấu không lỗi font chữ đấy)" id="send_email_2"
+                class="col-8 form-control mb-1 rounded">
+            <textarea placeholder="Nội dung(Cái này thì điền gì cũng được hết á)" id="send_email_3"
+                class="col-12 form-control mb-1 rounded"></textarea>
             <input type="file" id="file-input" class="col-12 rounded">
             <div class="col-12 text-center">
                 <button id="send_email_4" class="rounded">Gửi</button>
@@ -66,8 +69,8 @@
     </div>
     <script type="text/javascript">
 
-        const CLIENT_ID = '600421017738-adlfl0kf2dcel6h4ot0uncfal31kuc54.apps.googleusercontent.com';
-        const API_KEY = 'AIzaSyBWyDXn05ZoDqy698_vxCVcHjEeWsiZZec';
+        const CLIENT_ID = '600421017738-adlfl0kf2dcel6h4ot0uncfal31kuc54.apps.googleusercontent.com';//Thay thế bằng clientId của bạn
+        const API_KEY = 'AIzaSyBWyDXn05ZoDqy698_vxCVcHjEeWsiZZec';//Thay thế bằng apiKey của bạn
 
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest';
 
@@ -178,7 +181,7 @@
             const td3 = document.createElement('td');
             td0.innerText = 'STT';
             tr.appendChild(td0);
-            td1.innerText = `Tiêu đề`;
+            td1.innerText = `Tiêu đề(Nhấn vào từng phần tiêu đề để xem chi tiết)`;
             tr.appendChild(td1);
             td2.innerText = `Người gửi`;
             tr.appendChild(td2);
