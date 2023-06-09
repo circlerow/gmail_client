@@ -18,11 +18,22 @@
     <input type="text" placeholder="Tiêu đề" id="send_email_2">
     <textarea placeholder="Nội dung" id="send_email_3"></textarea>
     <button id="send_email_4">Gửi</button>
-    <input type="file" id="file-input">
     <button id="send_button_attach">Gửi Email với file đính kèm</button>
+    <input type="text" placeholder="Email nhận" id="send_email_a1">
+    <input type="text" placeholder="Tiêu đề" id="send_email_a2">
+    <textarea placeholder="Nội dung" id="send_email_a3"></textarea>
+    <input type="file" id="file-input">
+    <button id="send_email_a4">Gửi</button>
+
+
 
 
     <pre id="content" style="white-space: pre-wrap;"></pre>
+    <table>
+        <thead>
+
+        </thead>
+    </table>
 
     <script type="text/javascript">
 
@@ -31,8 +42,6 @@
 
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest';
 
-        // Authorization scopes required by the API; multiple scopes can be
-        // included, separated by spaces.
         const SCOPES = 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.compose';
 
         let tokenClient;
@@ -49,6 +58,11 @@
         document.getElementById('send_email_2').style.visibility = 'hidden';
         document.getElementById('send_email_3').style.visibility = 'hidden';
         document.getElementById('send_email_4').style.visibility = 'hidden';
+        document.getElementById('send_email_a1').style.visibility = 'hidden';
+        document.getElementById('send_email_a2').style.visibility = 'hidden';
+        document.getElementById('send_email_a3').style.visibility = 'hidden';
+        document.getElementById('send_email_a4').style.visibility = 'hidden';
+
 
 
 
@@ -92,7 +106,6 @@
                 document.getElementById('signout_button').style.visibility = 'visible';
                 document.getElementById('send_button').style.visibility = 'visible';
                 document.getElementById('list_email').style.visibility = 'visible';
-                document.getElementById('file-input').style.visibility = 'visible';
                 document.getElementById('send_button_attach').style.visibility = 'visible';
                 document.getElementById('authorize_button').innerText = 'Refresh';
             };
@@ -117,10 +130,6 @@
             }
         }
 
-        /**
-        * Print all Labels in the authorized user's inbox. If no labels
-        * are found an appropriate message is printed.
-        */
         async function listLabels() {
             let response;
             try {
@@ -171,9 +180,10 @@
                     const subject = emailData.payload.headers.find(header => header.name === 'Subject');
                     const sender = emailData.payload.headers.find(header => header.name === 'From');
                     const date = emailData.payload.headers.find(header => header.name === 'Date');
+                    const body = emailData.snippet;
 
                     // Hiển thị thông tin tiêu đề và người gửi của email
-                    const emailInfo = `Tiêu đề: ${subject.value}\nNgười gửi: ${sender.value}\nNgày gửi:${date.value}\n`;
+                    const emailInfo = `Tiêu đề: ${subject.value}\nNgười gửi: ${sender.value}\nNgày gửi:${date.value}\nNội dung: ${body}\n\n`;
                     document.getElementById('content').innerText += emailInfo;
                 } catch (err) {
                     console.error(`Lỗi khi lấy thông tin email ${email.id}: ${err.message}`);
@@ -271,10 +281,20 @@
             sendEmail(to, subject, body);
         });
 
-        document.getElementById('send_button_attach').addEventListener('click', function () {
-            const to = 'tu29102002@gmail.com';
-            const subject = 'Tiêu đề email'; // Tiêu đề email
-            const body = 'Nội dung email'; // Nội dung email
+        document.getElementById("send_button_attach").addEventListener('click', function () {
+            document.getElementById("send_email_a1").style.visibility = "visible";
+            document.getElementById("send_email_a2").style.visibility = "visible";
+            document.getElementById("send_email_a3").style.visibility = "visible";
+            document.getElementById("file-input").style.visibility = "visible";
+            document.getElementById("send_email_a4").style.visibility = "visible";
+
+        });
+
+
+        document.getElementById('send_email_a4').addEventListener('click', function () {
+            const to = document.getElementById('send_email_a1').value;
+            const subject = document.getElementById('send_email_a2').value;
+            const body = document.getElementById('send_email_a3').value;
             const attachment = document.getElementById('file-input').files[0]; // Tệp đính kèm
             sendEmailWithAttachment(to, subject, body, attachment);
         });
