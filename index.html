@@ -2,39 +2,68 @@
 <html>
 
 <head>
-    <title>Gmail API Quickstart</title>
+    <title>Gmail API</title>
     <meta charset="utf-8" />
 </head>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<style>
+    ul {
+        list-style: none;
+    }
+
+    table {
+        font-family: arial, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    td,
+    th {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+    }
+
+    tr:nth-child(even) {
+        background-color: #dddddd;
+    }
+
+    .detailEmail {
+        cursor: pointer;
+    }
+</style>
 
 <body>
-    <p>Gmail API Quickstart</p>
-
-    <!--Add buttons to initiate auth sequence and sign out-->
-    <button id="authorize_button" onclick="handleAuthClick()">Đăng nhập</button>
-    <button id="signout_button" onclick="handleSignoutClick()">Đăng xuất</button>
-    <button id="list_email">Danh sách email</button>
-    <button id="send_button">Gửi Email</button>
-    <input type="text" placeholder="Email nhận" id="send_email_1">
-    <input type="text" placeholder="Tiêu đề" id="send_email_2">
-    <textarea placeholder="Nội dung" id="send_email_3"></textarea>
-    <button id="send_email_4">Gửi</button>
-    <button id="send_button_attach">Gửi Email với file đính kèm</button>
-    <input type="text" placeholder="Email nhận" id="send_email_a1">
-    <input type="text" placeholder="Tiêu đề" id="send_email_a2">
-    <textarea placeholder="Nội dung" id="send_email_a3"></textarea>
-    <input type="file" id="file-input">
-    <button id="send_email_a4">Gửi</button>
-
-
-
-
-    <pre id="content" style="white-space: pre-wrap;"></pre>
-    <table>
-        <thead>
-
-        </thead>
-    </table>
-
+    <div class="row container-fluid bg-light">
+        <h1 class="text-center text-primary col-12">Gmail API</h1>
+        <div class="col-12 text-center">
+            <button id="authorize_button" onclick="handleAuthClick()" class="btn btn-primary">Đăng nhập</button>
+        </div>
+        <div class="col-12 text-right">
+            <button id="signout_button" onclick="handleSignoutClick()" class="btn btn-danger">Đăng xuất</button>
+        </div>
+        <div class="col-3">
+            <ul>
+                <li><button id="list_email" class="btn btn-info mb-2">Danh sách email</button></li>
+                <li><button id="send_button" class="btn btn-info mb-2">Gửi Email</button></li>
+                <li><button id="send_button_attach" class="btn btn-info">Gửi Email với file đính kèm</button></li>
+            </ul>
+        </div>
+        <div class="row col-8">
+            <input type="text" placeholder="Email nhận" id="send_email_1" class="col-8 mb-1 form-control rounded">
+            <input type="text" placeholder="Tiêu đề" id="send_email_2" class="col-8 form-control mb-1 rounded">
+            <textarea placeholder="Nội dung" id="send_email_3" class="col-12 form-control mb-1 rounded"></textarea>
+            <input type="file" id="file-input" class="col-12 rounded">
+            <div class="col-12 text-center">
+                <button id="send_email_4" class="rounded">Gửi</button>
+            </div>
+            <div class="col-12 text-center">
+                <button id="send_email_a4" class="rounded">Gửi</button>
+            </div>
+        </div>
+    </div>
+    <div class="row p-5 text-center" id="content">
+    </div>
     <script type="text/javascript">
 
         const CLIENT_ID = '600421017738-adlfl0kf2dcel6h4ot0uncfal31kuc54.apps.googleusercontent.com';
@@ -47,6 +76,7 @@
         let tokenClient;
         let gapiInited = false;
         let gisInited = false;
+        let count = 1;
 
         document.getElementById('authorize_button').style.visibility = 'hidden';
         document.getElementById('signout_button').style.visibility = 'hidden';
@@ -58,13 +88,7 @@
         document.getElementById('send_email_2').style.visibility = 'hidden';
         document.getElementById('send_email_3').style.visibility = 'hidden';
         document.getElementById('send_email_4').style.visibility = 'hidden';
-        document.getElementById('send_email_a1').style.visibility = 'hidden';
-        document.getElementById('send_email_a2').style.visibility = 'hidden';
-        document.getElementById('send_email_a3').style.visibility = 'hidden';
         document.getElementById('send_email_a4').style.visibility = 'hidden';
-
-
-
 
         function gapiLoaded() {
             gapi.load('client', initializeGapiClient);
@@ -79,7 +103,6 @@
             maybeEnableButtons();
         }
 
-
         function gisLoaded() {
             tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID,
@@ -90,13 +113,11 @@
             maybeEnableButtons();
         }
 
-
         function maybeEnableButtons() {
             if (gapiInited && gisInited) {
                 document.getElementById('authorize_button').style.visibility = 'visible';
             }
         }
-
 
         function handleAuthClick() {
             tokenClient.callback = async (resp) => {
@@ -130,28 +151,6 @@
             }
         }
 
-        async function listLabels() {
-            let response;
-            try {
-                response = await gapi.client.gmail.users.labels.list({
-                    'userId': 'me',
-                });
-            } catch (err) {
-                document.getElementById('content').innerText = err.message;
-                return;
-            }
-            const labels = response.result.labels;
-            if (!labels || labels.length == 0) {
-                document.getElementById('content').innerText = 'No labels found.';
-                return;
-            }
-            // Flatten to string to display
-            const output = labels.reduce(
-                (str, label) => `${str}${label.name}\n`,
-                'Labels:\n');
-            document.getElementById('content').innerText = output;
-        }
-
         async function listEmails() {
             let response;
             try {
@@ -168,7 +167,25 @@
                 return;
             }
 
-            // Lấy thông tin chi tiết cho từng email
+            let content = document.createElement('table');
+            document.getElementById('content').appendChild(content);
+            const detailEmail = document.getElementById('detailEmail');
+            if (detailEmail != null) document.body.removeChild(detailEmail);
+            const tr = document.createElement('tr');
+            const td0 = document.createElement('td');
+            const td1 = document.createElement('td');
+            const td2 = document.createElement('td');
+            const td3 = document.createElement('td');
+            td0.innerText = 'STT';
+            tr.appendChild(td0);
+            td1.innerText = `Tiêu đề`;
+            tr.appendChild(td1);
+            td2.innerText = `Người gửi`;
+            tr.appendChild(td2);
+            td3.innerText = `Ngày gửi`;
+            tr.appendChild(td3);
+            content.appendChild(tr);
+
             const emailPromises = emails.map(async (email) => {
                 try {
                     const emailResponse = await gapi.client.gmail.users.messages.get({
@@ -180,25 +197,51 @@
                     const subject = emailData.payload.headers.find(header => header.name === 'Subject');
                     const sender = emailData.payload.headers.find(header => header.name === 'From');
                     const date = emailData.payload.headers.find(header => header.name === 'Date');
-                    const body = emailData.snippet;
-
-                    // Hiển thị thông tin tiêu đề và người gửi của email
-                    const emailInfo = `Tiêu đề: ${subject.value}\nNgười gửi: ${sender.value}\nNgày gửi:${date.value}\nNội dung: ${body}\n\n`;
-                    document.getElementById('content').innerText += emailInfo;
+                    const tr = document.createElement('tr');
+                    const td0 = document.createElement('td');
+                    const td1 = document.createElement('td');
+                    const td2 = document.createElement('td');
+                    const td3 = document.createElement('td');
+                    td1.className = 'detailEmail';
+                    td1.addEventListener('click', () => {
+                        viewEmailDetails(email.id);
+                        document.getElementById('content').removeChild(content);
+                        document.getElementById('content').removeChild(buttonNext);
+                        count = 1;
+                    })
+                    td0.innerText = count;
+                    tr.appendChild(td0);
+                    td1.innerText = `${subject.value}`;
+                    tr.appendChild(td1);
+                    td2.innerText = `${sender.value}`;
+                    tr.appendChild(td2);
+                    td3.innerText = `${date.value}`;
+                    tr.appendChild(td3);
+                    content.appendChild(tr);
+                    count++;
                 } catch (err) {
                     console.error(`Lỗi khi lấy thông tin email ${email.id}: ${err.message}`);
                 }
             });
 
+            const buttonNext = document.createElement('button');
+            buttonNext.innerText = 'NextPage';
+            buttonNext.id = 'buttonNext';
+            buttonNext.addEventListener('click', () => {
+                document.getElementById('content').removeChild(content);
+                document.getElementById('content').removeChild(buttonNext);
+                listEmails();
+            })
+            document.getElementById('content').appendChild(buttonNext);
+
             await Promise.all(emailPromises);
         }
 
         /**
-* Gửi một email.
-* @param {string} to Địa chỉ email của người nhận.
-* @param {string} subject Tiêu đề của email.
-* @param {string} body Nội dung của email.
-*/
+        * @param {string} to 
+        * @param {string} subject 
+        * @param {string} body 
+        */
         async function sendEmail(to, subject, body) {
             const emailHeaders = [
                 `To: ${to}`,
@@ -264,6 +307,7 @@
 
             reader.readAsDataURL(attachment);
         }
+
         document.getElementById('list_email').addEventListener('click', listEmails);
 
         document.getElementById('send_button').addEventListener('click', function () {
@@ -271,34 +315,67 @@
             document.getElementById("send_email_2").style.visibility = "visible";
             document.getElementById("send_email_3").style.visibility = "visible";
             document.getElementById("send_email_4").style.visibility = "visible";
-
-
+            document.getElementById('send_email_a4').style.visibility = 'hidden';
+            document.getElementById("file-input").style.visibility = "hidden";
         });
+
         document.getElementById('send_email_4').addEventListener('click', function () {
             const to = document.getElementById('send_email_1').value;
             const subject = document.getElementById('send_email_2').value;
             const body = document.getElementById('send_email_3').value;
             sendEmail(to, subject, body);
+            alert("Đã gửi thành công");
+            document.getElementById('send_email_1').value = '';
+            document.getElementById('send_email_2').value = '';
+            document.getElementById('send_email_3').value = '';
         });
 
         document.getElementById("send_button_attach").addEventListener('click', function () {
-            document.getElementById("send_email_a1").style.visibility = "visible";
-            document.getElementById("send_email_a2").style.visibility = "visible";
-            document.getElementById("send_email_a3").style.visibility = "visible";
+            document.getElementById("send_email_1").style.visibility = "visible";
+            document.getElementById("send_email_2").style.visibility = "visible";
+            document.getElementById("send_email_3").style.visibility = "visible";
             document.getElementById("file-input").style.visibility = "visible";
             document.getElementById("send_email_a4").style.visibility = "visible";
-
+            document.getElementById('send_email_4').style.visibility = 'hidden';
         });
 
 
         document.getElementById('send_email_a4').addEventListener('click', function () {
-            const to = document.getElementById('send_email_a1').value;
-            const subject = document.getElementById('send_email_a2').value;
-            const body = document.getElementById('send_email_a3').value;
+            const to = document.getElementById('send_email_1').value;
+            const subject = document.getElementById('send_email_2').value;
+            const body = document.getElementById('send_email_3').value;
             const attachment = document.getElementById('file-input').files[0]; // Tệp đính kèm
             sendEmailWithAttachment(to, subject, body, attachment);
+            alert("Đã gửi thành công");
+            document.getElementById('send_email_1').value = '';
+            document.getElementById('send_email_2').value = '';
+            document.getElementById('send_email_3').value = '';
+            document.getElementById('file-input').value = '';
         });
 
+        async function viewEmailDetails(emailId) {
+            try {
+                const response = await gapi.client.gmail.users.messages.get({
+                    'userId': 'me',
+                    'id': emailId,
+                    'format': 'full',
+                });
+
+                const emailData = response.result;
+                const subject = emailData.payload.headers.find(header => header.name === 'Subject');
+                const sender = emailData.payload.headers.find(header => header.name === 'From');
+                const date = emailData.payload.headers.find(header => header.name === 'Date');
+                const body = emailData.snippet;
+                const emailInfo = `<h2>Chi tiết email</h2>Tiêu đề: ${subject.value}<br>Người gửi: ${sender.value}<br>Ngày gửi: ${date.value}<br>Nội dung: ${body}<br><br>;`
+                const detailEmail = document.createElement('div');
+                detailEmail.id = 'detailEmail';
+                detailEmail.classList = "text-left p-3 bg-light";
+                detailEmail.innerHTML = emailInfo;
+                document.body.appendChild(detailEmail);
+            } catch (err) {
+                console.error(`Lỗi khi lấy chi tiết email ${emailId}: ${err.message}`);
+            }
+        }
 
     </script>
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
