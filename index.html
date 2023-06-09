@@ -14,6 +14,10 @@
     <button id="signout_button" onclick="handleSignoutClick()">Đăng xuất</button>
     <button id="list_email">Danh sách email</button>
     <button id="send_button">Gửi Email</button>
+    <input type="text" placeholder="Email nhận" id="send_email_1">
+    <input type="text" placeholder="Tiêu đề" id="send_email_2">
+    <textarea placeholder="Nội dung" id="send_email_3"></textarea>
+    <button id="send_email_4">Gửi</button>
     <input type="file" id="file-input">
     <button id="send_button_attach">Gửi Email với file đính kèm</button>
 
@@ -41,6 +45,10 @@
         document.getElementById('send_button').style.visibility = 'hidden';
         document.getElementById('send_button_attach').style.visibility = 'hidden';
         document.getElementById('file-input').style.visibility = 'hidden';
+        document.getElementById('send_email_1').style.visibility = 'hidden';
+        document.getElementById('send_email_2').style.visibility = 'hidden';
+        document.getElementById('send_email_3').style.visibility = 'hidden';
+        document.getElementById('send_email_4').style.visibility = 'hidden';
 
 
 
@@ -75,9 +83,7 @@
             }
         }
 
-        /**
-        *  Sign in the user upon button click.
-        */
+
         function handleAuthClick() {
             tokenClient.callback = async (resp) => {
                 if (resp.error !== undefined) {
@@ -85,25 +91,21 @@
                 }
                 document.getElementById('signout_button').style.visibility = 'visible';
                 document.getElementById('send_button').style.visibility = 'visible';
+                document.getElementById('list_email').style.visibility = 'visible';
                 document.getElementById('file-input').style.visibility = 'visible';
                 document.getElementById('send_button_attach').style.visibility = 'visible';
                 document.getElementById('authorize_button').innerText = 'Refresh';
-                await listEmails();
             };
 
             if (gapi.client.getToken() === null) {
-                // Prompt the user to select a Google Account and ask for consent to share their data
-                // when establishing a new session.
+
                 tokenClient.requestAccessToken({ prompt: 'consent' });
             } else {
-                // Skip display of account chooser and consent dialog for an existing session.
                 tokenClient.requestAccessToken({ prompt: '' });
             }
         }
 
-        /**
-        *  Sign out the user upon button click.
-        */
+
         function handleSignoutClick() {
             const token = gapi.client.getToken();
             if (token !== null) {
@@ -141,12 +143,6 @@
             document.getElementById('content').innerText = output;
         }
 
-        /**
-* Lấy và hiển thị danh sách email trong hộp thư đến của người dùng.
-*/
-        /**
-* Lấy và hiển thị danh sách email trong hộp thư đến của người dùng.
-*/
         async function listEmails() {
             let response;
             try {
@@ -258,16 +254,22 @@
 
             reader.readAsDataURL(attachment);
         }
-        document.getElementById('list_email').addEventListener('click', listLabels);
+        document.getElementById('list_email').addEventListener('click', listEmails);
 
         document.getElementById('send_button').addEventListener('click', function () {
-            const to = 'tu29102002@gmail.com'; // Địa chỉ email người nhận
-            const subject = 'Tiêu đề email'; // Tiêu đề email
-            const body = 'Nội dung email'; // Nội dung email
+            document.getElementById("send_email_1").style.visibility = "visible";
+            document.getElementById("send_email_2").style.visibility = "visible";
+            document.getElementById("send_email_3").style.visibility = "visible";
+            document.getElementById("send_email_4").style.visibility = "visible";
 
+
+        });
+        document.getElementById('send_email_4').addEventListener('click', function () {
+            const to = document.getElementById('send_email_1').value;
+            const subject = document.getElementById('send_email_2').value;
+            const body = document.getElementById('send_email_3').value;
             sendEmail(to, subject, body);
         });
-
 
         document.getElementById('send_button_attach').addEventListener('click', function () {
             const to = 'tu29102002@gmail.com';
